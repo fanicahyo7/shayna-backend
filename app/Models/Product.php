@@ -18,6 +18,6 @@ class Product extends Model
     protected $hidden = [];
 
     public function galleries(){
-
+        return $this->hashMany(ProductGallery::class, 'products_id');
     }
 }
