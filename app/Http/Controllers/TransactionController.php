@@ -2,30 +2,26 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Product;
-use Illuminate\Support\Str;
+use App\Models\Transaction;
 use Illuminate\Http\Request;
-use App\Http\Requests\ProductRequest;
-use App\Models\ProductGallery;
 
-class ProductController extends Controller
+class TransactionController extends Controller
 {
+    public function __construct()
+    {
+        $this->middleware('auth');
+    }
     /**
      * Display a listing of the resource.
      *
      * @return \Illuminate\Http\Response
      */
-
-    public function __construct()
-    {
-        $this->middleware('auth');
-    }
-
     public function index()
     {
-        $items = Product::all();
-        return view('pages.products.index',[
-            'items' => $items
+        $item = Transaction::all();
+
+        return view('pages.transaction.index', [
+            'items' => $item
         ]);
     }
 
@@ -36,7 +32,7 @@ class ProductController extends Controller
      */
     public function create()
     {
-        return view('pages.products.create');
+        //
     }
 
     /**
@@ -45,13 +41,9 @@ class ProductController extends Controller
      * @param  \Illuminate\Http\Request  $request
      * @return \Illuminate\Http\Response
      */
-    public function store(ProductRequest $request)
+    public function store(Request $request)
     {
-        $data = $request->all();
-        $data['slug'] = Str::slug($request->name);
-
-        Product::create($data);
-        return redirect()->route('products.index');
+        //
     }
 
     /**
@@ -62,7 +54,12 @@ class ProductController extends Controller
      */
     public function show($id)
     {
-        //
+        $item = Transaction::with('transactiondetail.product')->findOrFail($id);
+
+        return view(
+            'pages.transaction.show',
+            ['item' => $item]
+        );
     }
 
     /**
@@ -73,12 +70,11 @@ class ProductController extends Controller
      */
     public function edit($id)
     {
-        $item = Product::findOrFail($id);
+        $item = Transaction::findOrFail($id);
 
-        return view('pages.products.edit',[
+        return view('pages.transaction.edit',[
             'item' => $item
         ]);
-
     }
 
     /**
@@ -88,14 +84,13 @@ class ProductController extends Controller
      * @param  int  $id
      * @return \Illuminate\Http\Response
      */
-    public function update(ProductRequest $request, $id)
+    public function update(Request $request, $id)
     {
         $data = $request->all();
-        $data['slug'] = Str::slug($request->name);
 
-        $item = Product::findOrFail($id);
+        $item = Transaction::findOrFail($id);
         $item->update($data);
-        return redirect()->route('products.index');
+        return redirect()->route('transactions.index');
     }
 
     /**
@@ -106,21 +101,23 @@ class ProductController extends Controller
      */
     public function destroy($id)
     {
-        $item = Product::findOrFail($id);
+        $item = Transaction::findOrFail($id);
         $item->delete();
 
-        ProductGallery::where('products_id', $id)->delete();
-
-        return redirect()->route('products.index');
+        return redirect()->route('transactions.index');
     }
 
-    public function gallery(Request $request, $id){
-        $produk = Product::findOrFail($id);
-        $items = ProductGallery::with('product')->where('products_id', $id)->get();
-
-        return view('pages.products.gallery',[
-            'product' => $produk,
-            'items' => $items
+    public function setStatus(Request $request, $id)
+    {
+        $request->validate([
+            'status' => 'required|in:PENDING,SUCCESS,FAILED'
         ]);
+
+        $item = Transaction::findOrFail($id);
+        $item->transaction_status = $request->status;
+
+        $item->save();
+
+        return redirect()->route('transactions.index');
     }
 }

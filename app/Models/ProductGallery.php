@@ -12,7 +12,7 @@ class ProductGallery extends Model
     use SoftDeletes;
 
     protected $fillable = [
-        'name', 'type', 'description', 'price', 'qty', 'slug'
+        'products_id', 'photo', 'is_default'
     ];
 
     protected $hidden = [];
